@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+
+  /* Agro-Space palette */
+  --color-earth: #2C1810;
+  --color-soil: #4A2C1A;
+  --color-clay: #8B5E3C;
+  --color-straw: #C8A96E;
+  --color-parchment: #F5EDD8;
+  --color-leaf-dark: #1A3D2B;
+  --color-leaf: #2D6A4F;
+  --color-leaf-light: #52B788;
+  --color-sky-deep: #051C3F;
+  --color-sky: #1565C0;
+  --color-sky-light: #64B5F6;
+  --color-drought: #D97706;
+  --color-flood: #1565C0;
+  --color-alert: #DC2626;
+  --color-healthy: #2D6A4F;
+  --color-surface: #0F1E14;
+  --color-surface-2: #172918;
+  --color-border: rgba(82, 183, 136, 0.15);
+  --color-text: #E8F5E9;
+  --color-text-muted: rgba(232, 245, 233, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-leaf); border-radius: 3px; }
+
+/* Grain texture overlay */
+.grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px;
+  animation: grain 0.5s steps(2) infinite;
+}
+
+/* Bento card */
+.bento-card {
+  background: linear-gradient(135deg, rgba(23, 41, 24, 0.95) 0%, rgba(15, 30, 20, 0.98) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.3s ease, transform 0.2s ease;
+}
+
+.bento-card:hover {
+  border-color: rgba(82, 183, 136, 0.35);
+  transform: translateY(-2px);
+}
+
+.bento-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top left, rgba(82, 183, 136, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Status pill */
+.status-drought {
+  background: rgba(217, 119, 6, 0.15);
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  color: #FCD34D;
+}
+
+.status-flood {
+  background: rgba(21, 101, 192, 0.15);
+  border: 1px solid rgba(21, 101, 192, 0.4);
+  color: #93C5FD;
+}
+
+.status-healthy {
+  background: rgba(45, 106, 79, 0.15);
+  border: 1px solid rgba(45, 106, 79, 0.4);
+  color: #86EFAC;
+}
+
+.status-alert {
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #FCA5A5;
+}
+
+/* Scan line animation */
+@keyframes grain {
+  0%, 100% { background-position: 0 0; }
+  25% { background-position: -5% -10%; }
+  50% { background-position: -15% 5%; }
+  75% { background-position: 5% -5%; }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); opacity: 0.4; }
+  100% { transform: translateY(400%); opacity: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Number counter style */
+.stat-number {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Satellite map grid */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 2px;
+}
+
+/* Recharts overrides */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(82, 183, 136, 0.08);
+}
+
+.recharts-text {
+  fill: rgba(232, 245, 233, 0.5);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.recharts-tooltip-wrapper {
+  filter: none !important;
+}
