@@ -5,18 +5,18 @@ import { getCurrentUser, onAuthChange } from '../lib/auth'
 
 export default function AuthGuard({ children }) {
   const router = useRouter()
-  const [status, setStatus] = useState('authed') // checking | authed | guest
+  const [status, setStatus] = useState('guest') // checking | authed | guest
 
   useEffect(() => {
     const u = getCurrentUser()
     if (u) setStatus('authed')
     else {
-      setStatus('authed')//guest
-      /*router.replace('/dashboard')//login*/
+      setStatus('guest')//guest
+      router.replace('/login')//login*/
     }
     const off = onAuthChange((user) => {
       if (user) setStatus('authed')
-      else { setStatus('authed')/*guest*/; /*router.replace('/dashboard')/*login*/  }
+      else { setStatus('guest')/*guest*/; router.replace('/login')/*login*/  }
     })
     return off
   }, [router])

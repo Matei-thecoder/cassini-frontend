@@ -38,7 +38,7 @@ function Settings() {
   function save() {
     const result = updateProfile({
       name: draft.name,
-      farmName: draft.farmName,
+      companyName: draft.companyName,
       country: draft.country,
       preferences: draft.preferences,
     })
@@ -125,7 +125,7 @@ function Settings() {
                   <Field label="Email" value={draft.email} disabled hint="Email cannot be changed in demo mode" />
                 </Row>
                 <Row>
-                  <Field label="Farm name" value={draft.farmName} onChange={v => setDraft(d => ({ ...d, farmName: v }))} />
+                  <Field label="Company name" value={draft.companyName} onChange={v => setDraft(d => ({ ...d, companyName: v }))} />
                   <FieldSelect
                     label="Country"
                     value={draft.country}
@@ -147,7 +147,7 @@ function Settings() {
                 </Row>
               </Card>
             )}
-
+            {/*}
             {active === 'preferences' && (
               <Card title="Preferences" subtitle="How data shows up across the app.">
                 <Row>
@@ -213,7 +213,48 @@ function Settings() {
                 />
               </Card>
             )}
+            */}
+            {active === 'preferences' && (
+              <Card title="Preferences" subtitle="How data shows up across the app.">
+                <div style={{
+                  padding: '20px 16px',
+                  borderRadius: 10,
+                  background: 'rgba(82,183,136,0.04)',
+                  border: '1px solid rgba(82,183,136,0.2)',
+                  textAlign: 'center',
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                    color: '#86EFAC',
+                  }}>🚧 Not working yet</div>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 12,
+                    color: 'rgba(232,245,233,0.5)', marginTop: 4,
+                  }}>Preferences customization is coming soon.</div>
+                </div>
+              </Card>
+            )}
 
+            {active === 'notifications' && (
+              <Card title="Notifications" subtitle="Choose what reaches your inbox and phone.">
+                <div style={{
+                  padding: '20px 16px',
+                  borderRadius: 10,
+                  background: 'rgba(82,183,136,0.04)',
+                  border: '1px solid rgba(82,183,136,0.2)',
+                  textAlign: 'center',
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                    color: '#86EFAC',
+                  }}>🚧 Not working yet</div>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 12,
+                    color: 'rgba(232,245,233,0.5)', marginTop: 4,
+                  }}>Notification settings are coming soon.</div>
+                </div>
+              </Card>
+            )}
             {active === 'account' && (
               <>
                 <Card title="Session" subtitle="You're signed in on this device.">

@@ -16,16 +16,22 @@ export default function LoginPage() {
     if (getCurrentUser()) router.replace('/dashboard')
   }, [router])
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setError('')
     setLoading(true)
-    const result = signIn({ email: email.trim(), password })
-    setLoading(false)
-    if (!result.ok) {
-      setError(result.error)
-      return
+
+    try {
+      const result = await signIn({ email: email.trim(), password })
+
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+
+      router.push('/dashboard')
+    } finally {
+      setLoading(false)
     }
-    router.push('/dashboard')
   }
 
   function handleKey(e) {

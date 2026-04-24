@@ -10,7 +10,7 @@ export default function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [farmName, setFarmName] = useState('')
+  const [companyName, setCompanyName] = useState('')
   const [country, setCountry] = useState('Romania')
   const [accept, setAccept] = useState(false)
   const [error, setError] = useState('')
@@ -20,26 +20,33 @@ export default function SignupPage() {
     if (getCurrentUser()) router.replace('/dashboard')
   }, [router])
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setError('')
     if (!accept) {
       setError('Please accept the terms to continue.')
       return
     }
+
     setLoading(true)
-    const result = signUp({
-      name: name.trim(),
-      email: email.trim(),
-      password,
-      farmName: farmName.trim(),
-      country,
-    })
-    setLoading(false)
-    if (!result.ok) {
-      setError(result.error)
-      return
+
+    try {
+      const result = await signUp({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        companyName: companyName.trim(),
+        country,
+      })
+
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+
+      router.push('/dashboard')
+    } finally {
+      setLoading(false)
     }
-    router.push('/dashboard')
   }
 
   function handleKey(e) {
@@ -80,7 +87,7 @@ export default function SignupPage() {
           <FormField label="Password" value={password} onChange={setPassword} type="password" placeholder="At least 6 characters" onKeyDown={handleKey} />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <FormField label="Farm name" value={farmName} onChange={setFarmName} placeholder="Valea Verde" onKeyDown={handleKey} />
+            <FormField label="Company Name" value={companyName} onChange={setCompanyName} placeholder="Company Name" onKeyDown={handleKey} />
             <div style={{ marginBottom: 14 }}>
               <label style={{
                 display: 'block',
