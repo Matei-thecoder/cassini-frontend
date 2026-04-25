@@ -277,7 +277,7 @@ export default function LandingPage() {
               fontSize: 16, color: 'rgba(232,245,233,0.6)',
               maxWidth: 520, margin: '0 auto 32px',
             }}>
-              Free during the 2025 season. Draw a polygon, we handle the rest.
+              Free during the 2026 season. Draw a polygon, we handle the rest.
               Upgrade only when you want alerts on more than three fields.
             </p>
             <Link href="/signup" style={{

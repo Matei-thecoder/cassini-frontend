@@ -23,7 +23,6 @@ const CombinedMap = dynamic(() => import('../../components/CombinedMap'), {
   )
 })
 
-// ✅ ONLY importing the math/geometry utilities now!
 import { 
   hectaresFromPolygon, 
   centroid 
@@ -47,17 +46,17 @@ function MapScreen() {
   const [form, setForm] = useState({ name: '', crop: 'Wheat' })
   const [toast, setToast] = useState(null)
 
-  // ✅ FETCH FIELDS FROM BACKEND ON LOAD
+  // ✅ FETCH FIELDS FROM BACKEND ON LOAD (Updated to use the Dashboard route with AI Data)
   const fetchFields = async () => {
     try {
       const token = localStorage.getItem('agro.token');
-      const response = await fetch('http://localhost:2000/api/fields', {
+      const response = await fetch('http://localhost:2000/api/fields/dashboard', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
-        const data = await response.json();
-        console.log("Fetched fields:", data);
-        setFields(data.fields);
+        const json = await response.json();
+        console.log("Fetched fields with AI data:", json.data);
+        setFields(json.data || []);
       } else {
         console.error("Failed to fetch fields");
       }
@@ -70,19 +69,35 @@ function MapScreen() {
     fetchFields();
   }, []);
 
+  // ✅ DYNAMIC STATS COMPUTATION FROM AI PAYLOAD
   const stats = useMemo(() => {
     const s = { total: fields.length, healthy: 0, alert: 0, area: 0 }
+    
     fields.forEach(f => {
-      // Allow fallbacks in case new DB records lack statuses
-      if ((f.status || 'healthy') === 'healthy') s.healthy++
-      else s.alert++
+      const analysis = f.latest_analysis;
 
-      if(f.area == undefined) {
-          f.area = computeArea(f.bounds) || 0; // Compute area if not provided, using bounds as a fallback
+      // 1. Calculate Area safely
+      let fieldArea = 0;
+      if (analysis?.area?.total_monitored_hectares !== undefined) {
+        fieldArea = parseFloat(analysis.area.total_monitored_hectares);
+      } else if (f.area !== null && f.area !== undefined) {
+        fieldArea = typeof f.area === 'object' ? parseFloat(f.area.total_monitored_hectares) : parseFloat(f.area);
       }
+      s.area += (fieldArea || 0);
 
-      s.area += (parseFloat(f.area) || 0)
+      // 2. Calculate Health Status based on AI Risk Score
+      let isAlert = false;
+      if (analysis) {
+        const rStat = analysis.stats?.find(st => st.id === 'max-risk');
+        // If max risk is above 50%, or engine is degraded, trigger an alert
+        if (rStat && parseFloat(rStat.value) > 50) isAlert = true;
+        if (analysis.status?.working === false) isAlert = true;
+      }
+      
+      if (isAlert) s.alert++;
+      else s.healthy++;
     })
+    
     return s
   }, [fields])
 
@@ -101,14 +116,13 @@ function MapScreen() {
     if (!pendingArea) return
     const c = centroid(pendingArea.points)
     
-    // Formatting data for your Postgres/Supabase table
     const newFieldData = {
       name: form.name.trim() || 'Unnamed Field',
-      crop_type: form.crop, // Mapped to your DB column name
+      crop_type: form.crop, 
       area: parseFloat(pendingArea.area.toFixed(2)),
       lat: c.lat,
       lng: c.lng,
-      geometry: pendingArea.points, // Adjust if your DB requires GeoJSON format specifically
+      geometry: pendingArea.points,
       status: 'healthy',
       soilMoisture: 55,
       ndvi: 0.62,
@@ -128,7 +142,7 @@ function MapScreen() {
       if (response.ok) {
         setPendingArea(null)
         showToast('Field successfully mapped')
-        fetchFields() // Re-fetch from DB to get the new ID assigned by Postgres!
+        fetchFields() 
       } else {
         showToast('Error saving field to database')
       }
@@ -136,12 +150,6 @@ function MapScreen() {
       showToast('Server connection failed')
     }
   }
-  function computeArea(bounds)
-{
-  if (!bounds) return null;
-  return (Math.abs((bounds.maxlat - bounds.minlat) * (bounds.maxlon - bounds.minlon)) * 12365).toFixed(2); // Rough conversion to hectares
-
-}
 
   // ✅ DELETE FROM BACKEND
   async function handleRemove(id) {
@@ -173,6 +181,17 @@ function MapScreen() {
 
   const selected = fields.find(f => f.id === selectedField)
 
+  // Helper to extract area safely for individual fields in rendering
+  const getFieldArea = (f) => {
+    if (f?.latest_analysis?.area?.total_monitored_hectares !== undefined) {
+      return parseFloat(f.latest_analysis.area.total_monitored_hectares).toFixed(2);
+    }
+    if (f?.area !== undefined && f?.area !== null) {
+      return typeof f.area === 'object' ? parseFloat(f.area.total_monitored_hectares).toFixed(2) : parseFloat(f.area).toFixed(2);
+    }
+    return '--';
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0F1E14', color: '#E8F5E9' }}>
       <Header />
@@ -183,7 +202,7 @@ function MapScreen() {
           <div>
             <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: '#FFF' }}>Parcels Map</h1>
             <p style={{ fontSize: 14, color: '#52B788', marginTop: 8 }}>
-              {stats.total} MONITORED • {stats.area.toFixed(2)} HA TOTAL AREA
+              {stats.total} MONITORED • {new Intl.NumberFormat('en-US').format(stats.area.toFixed(2))} HA TOTAL AREA
             </p>
           </div>
 
@@ -209,76 +228,71 @@ function MapScreen() {
                 onAreaDrawn={handleAreaDrawn}
               />
             </div>
-
-            {/* Map Controls */}
-            {/*
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 8px' }}>
-              <div style={{ display: 'flex', gap: 8, background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 12 }}>
-                <ControlBtn active={drawMode === 'none'} icon="🖐" label="Pan" onClick={() => setDrawMode('none')} />
-                <ControlBtn active={drawMode === 'rect'} icon="▭" label="Square" onClick={() => setDrawMode('rect')} />
-                <ControlBtn active={drawMode === 'polygon'} icon="⬡" label="Polygon" onClick={() => setDrawMode('polygon')} />
-              </div>
-              <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#52B788', opacity: 0.6 }}>
-                {drawMode !== 'none' ? 'DRAWING_ENABLED' : 'VIEW_ONLY'}
-              </div>
-            </div>
-            */}
           </div>
 
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/*}
-            {pendingArea ? (
-              <div style={{ background: '#1B3224', padding: 24, borderRadius: 24, border: '1px solid #52B788' }}>
-                <h3 style={{ fontSize: 20, marginBottom: 4 }}>Initialize Field</h3>
-                <p style={{ fontSize: 14, color: '#52B788', marginBottom: 24 }}>Measured Area: {pendingArea.area.toFixed(2)} ha</p>
-                
-                <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>Field Name</label>
-                  <input style={inputStyle} value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                </div>
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={labelStyle}>Crop Type</label>
-                  <select style={inputStyle} value={form.crop_type} onChange={e => setForm({...form, crop: e.target.value})}>
-                    {CROP_OPTIONS.map(c => <option key={c} value={c} style={{background: '#0F1E14'}}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={saveField} style={primaryBtn}>Save Field</button>
-                  <button onClick={() => setPendingArea(null)} style={secondaryBtn}>Cancel</button>
-                </div>
-              </div>
-              */}
-
             { selected ? (
               <div style={{ background: 'rgba(232,245,233,0.05)', padding: 24, borderRadius: 24, border: '1px solid rgba(82,183,136,0.2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
                   <div>
                     <h3 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{selected.name}</h3>
-                    {/* Fallback to selected.crop if your DB uses crop_type */}
-                    <span style={{ fontSize: 13, color: '#52B788' }}>{selected.crop_type || selected.crop}</span>
+                    <span style={{ fontSize: 13, color: '#52B788' }}>{selected.crop_type || selected.crop || 'Unknown Crop'}</span>
                   </div>
-                  <div style={{ background: (selected.status || 'healthy') === 'healthy' ? '#2D6A4F' : '#7F1D1D', color: '#FFF', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
-                    {(selected.status || 'healthy').toUpperCase()}
-                  </div>
+                  
+                  {/* Status Pill Calculated from AI Data */}
+                  {(() => {
+                    const analysis = selected.latest_analysis;
+                    let statusText = 'HEALTHY';
+                    let statusColor = '#2D6A4F'; // Green
+                    
+                    if (!analysis) {
+                      statusText = 'PENDING';
+                      statusColor = '#4B5563'; // Gray
+                    } else {
+                      const rStat = analysis.stats?.find(st => st.id === 'max-risk');
+                      if (rStat && parseFloat(rStat.value) > 50) {
+                          statusText = 'ALERT';
+                          statusColor = '#7F1D1D'; // Red
+                      } else if (analysis.status?.working === false) {
+                          statusText = 'DEGRADED';
+                          statusColor = '#9A3412'; // Orange
+                      }
+                    }
+
+                    return (
+                      <div style={{ background: statusColor, color: '#FFF', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                        {statusText}
+                      </div>
+                    )
+                  })()}
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <DataRow label="Land Area" value={`${computeArea(selected.bounds) || '--'} ha`} />
-                  <DataRow label="NDVI Score" value={selected.ndvi ? selected.ndvi.toFixed(2) : '--'} />
-                  <DataRow label="Moisture" value={`${selected.soilMoisture || 65}%`} />
+                  {/* Land Area extracted dynamically */}
+                  <DataRow label="Land Area" value={`${getFieldArea(selected)} ha`} />
+                  
+                  {/* Moisture extracted dynamically */}
+                  <DataRow label="Moisture Proxy" value={
+                    selected.latest_analysis?.weather?.soil_moisture_proxy !== undefined 
+                      ? `${(selected.latest_analysis.weather.soil_moisture_proxy * 100).toFixed(1)}%` 
+                      : '--'
+                  } />
+
+                  {/* AI Risk Score extracted dynamically */}
+                  <DataRow label="Max AI Risk" value={
+                    selected.latest_analysis?.stats?.find(s => s.id === 'max-risk') 
+                      ? `${parseFloat(selected.latest_analysis.stats.find(s => s.id === 'max-risk').value).toFixed(1)}%` 
+                      : '--'
+                  } />
                 </div>
 
-                {/* Always show delete button now since ALL fields fetched are the user's fields */}
                 <button onClick={() => handleRemove(selected.id)} style={dangerBtn}>Delete Parcel</button>
               </div>
             ) : (
-              /* Acest bloc apare când NU ai nimic selectat (starea default) */
               <div style={{ background: '#2D6A4F', padding: 24, borderRadius: 24, color: '#FFF' }}>
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Parcel Information</h3>
-                <p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.5 }}>Select a field from the Field Directory bellow to see more information.</p>
+                <p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.5 }}>Select a field from the Field Directory below to see more information and active telemetry.</p>
               </div>
             )}
 
@@ -297,7 +311,7 @@ function MapScreen() {
                     }}
                   >
                     <span style={{ fontSize: 14 }}>{f.name}</span>
-                    <span style={{ fontSize: 12, opacity: 0.4 }}>{f.area || '--'} ha</span>
+                    <span style={{ fontSize: 12, opacity: 0.4 }}>{getFieldArea(f)} ha</span>
                   </button>
                 ))}
               </div>
@@ -326,18 +340,6 @@ function StatChip({ color, label, count }) {
   )
 }
 
-function ControlBtn({ active, icon, label, onClick }) {
-  return (
-    <button onClick={onClick} style={{ 
-      display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, 
-      border: 'none', background: active ? '#2D6A4F' : 'transparent', 
-      color: active ? '#FFF' : '#52B788', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: '0.2s'
-    }}>
-      {icon} {label}
-    </button>
-  )
-}
-
 function DataRow({ label, value }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(82,183,136,0.1)' }}>
@@ -347,9 +349,4 @@ function DataRow({ label, value }) {
   )
 }
 
-const labelStyle = { display: 'block', fontSize: 11, fontWeight: 700, color: '#52B788', marginBottom: 8, textTransform: 'uppercase' }
-const inputStyle = { width: '100%', padding: '12px', borderRadius: 8, border: '1px solid rgba(82,183,136,0.3)', background: 'rgba(0,0,0,0.3)', color: '#FFF', fontSize: 14, outline: 'none' }
-const primaryBtn = { flex: 1, padding: '12px', background: '#52B788', color: '#0F1E14', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }
-const secondaryBtn = { padding: '12px 16px', background: 'transparent', border: '1px solid rgba(232,245,233,0.2)', color: '#FFF', borderRadius: 8, cursor: 'pointer' }
 const dangerBtn = { width: '100%', marginTop: 24, padding: '12px', background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.3)', color: '#FCA5A5', borderRadius: 8, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }
-
