@@ -61,9 +61,15 @@ export function getCurrentUser() {
 function setCurrentUser(user) {
   const storage = safeStorage()
   if (!storage) return
-  if (user) storage.setItem(KEY_USER, JSON.stringify(user))
-  else storage.removeItem(KEY_USER)
-  window.dispatchEvent(new CustomEvent('agro:auth', { detail: user }))
+  if (user) {
+    storage.setItem(KEY_USER, JSON.stringify(user))
+  } else {
+    storage.removeItem(KEY_USER)
+  }
+  // ✅ Această linie este critică: anunță toate componentele că userul s-a schimbat
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('agro:auth', { detail: user }))
+  }
 }
 
 export async function signUp({ name, email, password, companyName, country }) {
@@ -118,8 +124,17 @@ export function updateProfile(patch) {
   const current = getCurrentUser()
   if (!current) return { ok: false, error: 'Not logged in.' }
 
-  const updated = { ...current, ...patch }
-  setCurrentUser(updated)
+  // Facem merge între datele vechi și cele noi (patch)
+  const updated = { 
+    ...current, 
+    ...patch,
+    preferences: {
+      ...(current.preferences || {}),
+      ...(patch.preferences || {})
+    }
+  }
+  
+  setCurrentUser(updated) // Salvează și declanșează evenimentul agro:auth
   return { ok: true, user: updated }
 }
 

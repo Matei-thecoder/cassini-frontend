@@ -215,25 +215,71 @@ function Settings() {
             )}
             */}
             {active === 'preferences' && (
-              <Card title="Preferences" subtitle="How data shows up across the app.">
-                <div style={{
-                  padding: '20px 16px',
-                  borderRadius: 10,
-                  background: 'rgba(82,183,136,0.04)',
-                  border: '1px solid rgba(82,183,136,0.2)',
-                  textAlign: 'center',
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
-                    color: '#86EFAC',
-                  }}>🚧 Not working yet</div>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: 12,
-                    color: 'rgba(232,245,233,0.5)', marginTop: 4,
-                  }}>Preferences customization is coming soon.</div>
+            <Card title="Preferences" subtitle="Customize how environmental data is displayed.">
+              <Row>
+                <FieldSelect
+                  label="Measurement Units"
+                  value={draft.preferences?.units || 'metric'}
+                  onChange={v => setPref('units', v)}
+                  options={[
+                    { value: 'metric', label: 'Metric (Hectares, mm, °C)' },
+                    { value: 'imperial', label: 'Imperial (Acres, in, °F)' },
+                  ]}
+                />
+                <FieldSelect
+                  label="Default Map Style"
+                  value={draft.preferences?.mapStyle || 'satellite'}
+                  onChange={v => setPref('mapStyle', v)}
+                  options={[
+                    { value: 'satellite', label: 'Satellite Imagery' },
+                    { value: 'terrain', label: 'Terrain / Topographic' },
+                    { value: 'hybrid', label: 'Hybrid View' },
+                  ]}
+                />
+              </Row>
+
+              <Row>
+                <FieldSelect
+                  label="Language"
+                  value={draft.preferences?.language || 'English'}
+                  onChange={v => setPref('language', v)}
+                  options={['English', 'Română', 'Deutsch', 'Français']}
+                />
+                <FieldSelect
+                  label="Data Refresh Rate"
+                  value={draft.preferences?.refreshRate || '1h'}
+                  onChange={v => setPref('refreshRate', v)}
+                  options={[
+                    { value: '1h', label: 'Every hour' },
+                    { value: '6h', label: 'Every 6 hours' },
+                  ]}
+                />
+              </Row>
+
+              <div style={{ marginTop: 8 }}>
+                <label style={labelStyle}>Soil Moisture Alert Threshold ({draft.preferences?.moistureThreshold || 20}%)</label>
+                <input 
+                  type="range" 
+                  min="5" max="50" 
+                  value={draft.preferences?.moistureThreshold || 20}
+                  onChange={(e) => setPref('moistureThreshold', e.target.value)}
+                  style={{
+                    width: '100%',
+                    accentColor: '#52B788',
+                    background: 'rgba(82,183,136,0.1)',
+                    height: 6,
+                    borderRadius: 3,
+                    appearance: 'none',
+                    cursor: 'pointer'
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(232,245,233,0.3)' }}>Dry (5%)</span>
+                  <span style={{ fontSize: 10, color: 'rgba(232,245,233,0.3)' }}>Optimal (50%)</span>
                 </div>
-              </Card>
-            )}
+              </div>
+            </Card>
+          )}
 
             {active === 'notifications' && (
               <Card title="Notifications" subtitle="Choose what reaches your inbox and phone.">
