@@ -1,12 +1,11 @@
 'use client'
-import { SUMMARY_STATS } from '../lib/data'
 
 function StatCard({ value, label, sub, accent, icon, delay }) {
   return (
     <div className="bento-card" style={{
       padding: '20px 24px',
       flex: 1,
-      minWidth: 160,
+      minWidth: 180, // Am mărit puțin pentru a nu tăia textul la Imperial
       animation: `slideUp 0.5s ease-out ${delay}s both`,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -21,7 +20,7 @@ function StatCard({ value, label, sub, accent, icon, delay }) {
       </div>
       <div style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 32,
+        fontSize: 28, // Scăzut de la 32 pentru a încăpea numerele mai lungi
         fontWeight: 700,
         color: accent || '#E8F5E9',
         lineHeight: 1,
@@ -39,57 +38,96 @@ function StatCard({ value, label, sub, accent, icon, delay }) {
   )
 }
 
-export default function StatsRow() {
-  const { totalArea, healthyPercent, floodRisk, droughtRisk, projectedYield, yieldChange, activeSensors } = SUMMARY_STATS
+function calculateHectares(coords) {
+  if (!coords || coords.length < 3) return 0;
+  let area = 0;
+  for (let i = 0; i < coords.length; i++) {
+    let j = (i + 1) % coords.length;
+    area += coords[i].lng * coords[j].lat;
+    area -= coords[j].lng * coords[i].lat;
+  }
+  return (Math.abs(area) / 2) * 10000;
+}
+
+
+export default function StatsRow({ fields = [], unitPreference = 'metric' }) {
+  
+  // 1. Calculăm Aria Totală dinamic
+  const totalAreaHa = fields.reduce((acc, f) => {
+  const serverArea = parseFloat(f.area);
+  if (!isNaN(serverArea) && serverArea > 0) return acc + serverArea;
+  // ✅ geometry e array direct, nu geometry.polygon
+  const points = Array.isArray(f.geometry) ? f.geometry : (f.geometry?.polygon || f.polygon || []);
+  return acc + calculateHectares(points);
+}, 0);
+
+  // 2. Logica de conversie Unități
+  const isImperial = unitPreference === 'imperial';
+  const displayArea = isImperial 
+    ? (totalAreaHa * 2.47105).toFixed(2) + " ac" 
+    : totalAreaHa.toFixed(2) + " ha";
+
+  const subTextFields = `${fields.length} active ${fields.length === 1 ? 'field' : 'fields'}`;
+
+  // 3. Simulăm restul de date bazat pe câmpurile reale (sau poți păstra SUMMARY_STATS pentru demo)
+  // Într-o aplicație reală, acești parametri ar veni tot din calcule pe 'fields'
+  const healthyCount = fields.filter(f => f.status === 'healthy').length;
+  const healthyPercent = fields.length > 0 ? Math.round((healthyCount / fields.length) * 100) : 0;
+
+console.log('FIELDS IN STATSROW:', fields)
+console.log('FIRST FIELD:', fields[0])
+console.log('FIRST FIELD AREA:', fields[0]?.area)
+console.log('FIRST FIELD POLYGON:', fields[0]?.geometry?.polygon || fields[0]?.polygon)
+
 
   return (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
       <StatCard
-        value={`${totalArea} ha`}
+        value={displayArea}
         label="Total Area"
-        sub="5 active fields"
+        sub={subTextFields}
         icon="🗺️"
         delay={0.1}
       />
       <StatCard
         value={`${healthyPercent}%`}
-        label="Healthy"
-        sub="351 ha optimal"
+        label="Health Score"
+        sub="Based on NDVI"
         accent="#52B788"
         icon="✅"
         delay={0.15}
       />
       <StatCard
-        value={`${floodRisk}%`}
+        value="12%" 
         label="Flood Risk"
-        sub="89 ha affected"
+        sub="Next 48h forecast"
         accent="#64B5F6"
         icon="🌊"
         delay={0.2}
       />
       <StatCard
-        value={`${droughtRisk}%`}
+        value="0.4%"
         label="Drought Risk"
-        sub="217 ha deficit"
+        sub="Soil moisture stable"
         accent="#FCD34D"
         icon="🌵"
         delay={0.25}
       />
       <StatCard
-        value={projectedYield}
-        label="Projected Yield"
-        sub={`${yieldChange} vs baseline`}
+        value={isImperial ? "4.2 t/ac" : "10.4 t/ha"}
+        label="Avg. Yield"
+        sub="+2.1% vs 2024"
         accent="#86EFAC"
         icon="💹"
         delay={0.3}
       />
       <StatCard
-        value={activeSensors.toLocaleString()}
-        label="Sensors Online"
+        value="847"
+        label="Sensors"
         sub="99.2% uptime"
         icon="📡"
         delay={0.35}
       />
     </div>
   )
-}
+} 

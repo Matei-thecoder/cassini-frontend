@@ -312,6 +312,7 @@ function Dashboard() {
     </div>
   )
 }*/
+
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -325,7 +326,7 @@ import MoistureChart from '../../components/MoistureChart'
 import WeatherWidget from '../../components/WeatherWidget'
 import AlertFeed from '../../components/AlertFeed'
 import PredictionPanel from '../../components/PredictionPanel'
-import { getCurrentUser } from '../../lib/auth'
+import { getCurrentUser, onAuthChange } from '../../lib/auth'
 
 export default function DashboardPage() {
   return (
@@ -338,13 +339,19 @@ export default function DashboardPage() {
 function Dashboard() {
   const router = useRouter()
   const [selectedField, setSelectedField] = useState(null)
-  const [user, setUser] = useState(null)
+  
   const [fields, setFields] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    // Set the current user
-    setUser(getCurrentUser())
+    // 1. Încărcare inițială
+    const initialUser = getCurrentUser()
+    setUser(initialUser)
+
+    const unsubscribe = onAuthChange((newUser) => {
+      setUser(newUser);
+    });
 
     // Fetch the live fields from your Node.js backend
     const fetchMyFields = async () => {
@@ -371,11 +378,47 @@ function Dashboard() {
         setIsLoading(false)
       }
     }
-
     fetchMyFields()
+
+    return () => unsubscribe();
+
   }, [])
 
-  const totalArea = fields.reduce((s, f) => s + (f.area || 0), 0)
+  // --- LOGICA DE CONVERSIE UNITATI ---
+  const unitPref = user?.preferences?.units || 'metric';
+
+  const calculateHectares = (coords) => {
+  if (!coords || coords.length < 3) return 0;
+  let area = 0;
+  // Formula Shoelace pentru puncte [ {lat, lng}, ... ]
+  for (let i = 0; i < coords.length; i++) {
+    let j = (i + 1) % coords.length;
+    area += coords[i].lng * coords[j].lat;
+    area -= coords[j].lng * coords[i].lat;
+  }
+  // Constanta de conversie aproximativă pentru Lat/Lng în Hectare
+  // (La scara unei ferme, 1 grad pătrat e aprox. 10^10 mp, convertim în Ha)
+  const hectares = (Math.abs(area) / 2) * 10000; 
+  return hectares;
+};
+
+
+// Folosește-o în reduce dacă f.area lipsește:
+const totalAreaHa = fields.reduce((s, f) => {
+  if (f.area && f.area > 0) return s + parseFloat(f.area);
+  
+  const points = Array.isArray(f.geometry) ? f.geometry : (f.geometry?.polygon || f.polygon || []);
+  return s + calculateHectares(points);
+}, 0);
+
+
+
+  const formatAreaDisplay = (hectares) => {
+    if (unitPref === 'imperial') {
+      return `${(hectares * 2.47105).toFixed(2)} monitored acres`;
+    }
+    return `${hectares.toFixed(2)} monitored hectares`;
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-surface)' }}>
@@ -408,7 +451,8 @@ function Dashboard() {
                 color: 'rgba(232,245,233,0.45)', maxWidth: 560,
               }}>
                 {user?.farmName ? `${user.farmName} · ` : ''}
-                Flood & drought detection with AI-driven yield forecasting across {totalArea} monitored hectares.
+                {/* ✅ MODIFICARE: Folosim functia de conversie aici */}
+                Flood & drought detection with AI-driven yield forecasting across {formatAreaDisplay(totalAreaHa)}.
               </p>
             </div>
 
@@ -448,7 +492,8 @@ function Dashboard() {
 
       <main style={{ maxWidth: 1400, margin: '0 auto', padding: '24px' }}>
         <div style={{ marginBottom: 20 }}>
-          <StatsRow />
+          {/* ✅ MODIFICARE: Trimitem fields si preferinta de unitate */}
+          <StatsRow fields={fields} unitPreference={unitPref} />
         </div>
 
         <div style={{
@@ -466,21 +511,17 @@ function Dashboard() {
             
           </div>
           <div style={{ gridColumn: '2', gridRow: '1' }}>
-            {/*<FieldsList 
-              fields={fields} 
-              selectedField={selectedField} 
-              setSelectedField={setSelectedField} 
-            />*/}
             <FieldsList 
               fields={fields} 
-              setFields={setFields} /* ✅ ADD THIS */
+              setFields={setFields}
               selectedField={selectedField} 
               setSelectedField={setSelectedField} 
+              unitPreference={unitPref} /* Pasam si aici daca vrei lista convertita */
             />
           </div>
           <div style={{ gridColumn: '3', gridRow: '1' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
-              <WeatherWidget />
+              <WeatherWidget unitPreference={unitPref} />
               <AlertFeed />
             </div>
           </div>
@@ -492,11 +533,11 @@ function Dashboard() {
           gap: 16, marginTop: 16,
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <EconomicChart />
+            <EconomicChart unitPreference={unitPref} />
             <MoistureChart />
           </div>
           <div>
-            <PredictionPanel />
+            <PredictionPanel unitPreference={unitPref} />
           </div>
         </div>
 
