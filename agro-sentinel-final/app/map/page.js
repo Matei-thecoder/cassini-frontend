@@ -499,16 +499,7 @@ function MapScreen() {
             </div>
 
             {/* Map Controls */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 8px' }}>
-              <div style={{ display: 'flex', gap: 8, background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 12 }}>
-                <ControlBtn active={drawMode === 'none'} icon="🖐" label="Pan" onClick={() => setDrawMode('none')} />
-                <ControlBtn active={drawMode === 'rect'} icon="▭" label="Square" onClick={() => setDrawMode('rect')} />
-                <ControlBtn active={drawMode === 'polygon'} icon="⬡" label="Polygon" onClick={() => setDrawMode('polygon')} />
-              </div>
-              <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#52B788', opacity: 0.6 }}>
-                {drawMode !== 'none' ? 'DRAWING_ENABLED' : 'VIEW_ONLY'}
-              </div>
-            </div>
+            
           </div>
 
           {/* Sidebar */}
@@ -560,8 +551,8 @@ function MapScreen() {
               </div>
             ) : (
               <div style={{ background: '#2D6A4F', padding: 24, borderRadius: 24, color: '#FFF' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Mapping Tools</h3>
-                <p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.5 }}>Select a field or use the drawing tools to define new boundaries for satellite monitoring.</p>
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Parcel Information</h3>
+                <p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.5 }}>Select a field from the field directory to see information about it.</p>
               </div>
             )}
 
