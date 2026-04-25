@@ -65,6 +65,57 @@ function Settings() {
     router.push('/')
   }
 
+  function NotificationToggle({ label, sub, defaultChecked = false }) {
+    const [enabled, setEnabled] = useState(defaultChecked);
+  
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '12px 0' 
+      }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#FFF' }}>{label}</div>
+          <div style={{ fontSize: 12, color: '#52B788', opacity: 0.7 }}>{sub}</div>
+        </div>
+        <button 
+          onClick={() => setEnabled(!enabled)}
+          style={{
+            width: 44,
+            height: 22,
+            borderRadius: 11,
+            background: enabled ? '#52B788' : 'rgba(255,255,255,0.1)',
+            border: 'none',
+            position: 'relative',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <div style={{
+            width: 16,
+            height: 16,
+            borderRadius: '50%',
+            background: enabled ? '#0F1E14' : '#E8F5E9',
+            position: 'absolute',
+            top: 3,
+            left: enabled ? 25 : 3,
+            transition: 'all 0.3s ease'
+          }} />
+        </button>
+      </div>
+    );
+  }
+  
+  const sectionHeader = {
+    fontSize: 11,
+    fontWeight: 700, 
+    color: '#52B788',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    marginBottom: 12
+  };
+
   const dirty = JSON.stringify(draft) !== JSON.stringify(user)
 
   return (
@@ -282,24 +333,65 @@ function Settings() {
           )}
 
             {active === 'notifications' && (
-              <Card title="Notifications" subtitle="Choose what reaches your inbox and phone.">
-                <div style={{
-                  padding: '20px 16px',
-                  borderRadius: 10,
-                  background: 'rgba(82,183,136,0.04)',
-                  border: '1px solid rgba(82,183,136,0.2)',
-                  textAlign: 'center',
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
-                    color: '#86EFAC',
-                  }}>🚧 Not working yet</div>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: 12,
-                    color: 'rgba(232,245,233,0.5)', marginTop: 4,
-                  }}>Notification settings are coming soon.</div>
+              <Card title="Notifications" subtitle="Configure how you receive satellite insights and calamity alerts.">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                
+                {/* Section: Alert Channels */}
+                <div style={{ paddingBottom: 20, borderBottom: '1px solid rgba(82,183,136,0.1)' }}>
+                  <h4 style={sectionHeader}>Delivery Channels</h4>
+                  <NotificationToggle 
+                    label="Email Reports" 
+                    sub="Weekly summary of parcel health" 
+                    defaultChecked 
+                  />
+                  <NotificationToggle 
+                    label="Push Notifications" 
+                    sub="Real-time browser & mobile alerts" 
+                    defaultChecked 
+                  />
+                  <NotificationToggle 
+                    label="SMS Alerts" 
+                    sub="Critical calamity warnings only" 
+                  />
                 </div>
-              </Card>
+            
+                {/* Section: Monitoring Thresholds */}
+                <div>
+                  <h4 style={sectionHeader}>Monitoring Alerts</h4>
+                  <NotificationToggle 
+                    label="NDVI Significant Drop" 
+                    sub="Alert when vegetation index drops > 15%" 
+                    defaultChecked 
+                  />
+                  <NotificationToggle 
+                    label="Moisture Stress" 
+                    sub="Alert when soil moisture falls below 30%" 
+                    defaultChecked 
+                  />
+                  <NotificationToggle 
+                    label="Weather Anomalies" 
+                    sub="Frost, heatwave, or heavy rain warnings" 
+                    defaultChecked 
+                  />
+                </div>
+            
+                {/* Footer Note */}
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'rgba(82,183,136,0.05)',
+                  border: '1px solid rgba(82,183,136,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12
+                }}>
+                  <span style={{ fontSize: 18 }}>📡</span>
+                  <p style={{ margin: 0, fontSize: 12, color: 'rgba(232,245,233,0.7)', lineHeight: 1.4 }}>
+                    <strong>Pro-tip:</strong> Critical calamity alerts based on Copernicus satellite data are sent via all enabled channels automatically.
+                  </p>
+                </div>
+              </div>
+            </Card>
             )}
             {active === 'account' && (
               <>

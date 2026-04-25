@@ -227,7 +227,7 @@ function MapScreen() {
 
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            
+            {/*}
             {pendingArea ? (
               <div style={{ background: '#1B3224', padding: 24, borderRadius: 24, border: '1px solid #52B788' }}>
                 <h3 style={{ fontSize: 20, marginBottom: 4 }}>Initialize Field</h3>
@@ -250,7 +250,9 @@ function MapScreen() {
                   <button onClick={() => setPendingArea(null)} style={secondaryBtn}>Cancel</button>
                 </div>
               </div>
-            ) : selected ? (
+              */}
+
+            { selected ? (
               <div style={{ background: 'rgba(232,245,233,0.05)', padding: 24, borderRadius: 24, border: '1px solid rgba(82,183,136,0.2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
                   <div>
@@ -273,9 +275,10 @@ function MapScreen() {
                 <button onClick={() => handleRemove(selected.id)} style={dangerBtn}>Delete Parcel</button>
               </div>
             ) : (
+              /* Acest bloc apare când NU ai nimic selectat (starea default) */
               <div style={{ background: '#2D6A4F', padding: 24, borderRadius: 24, color: '#FFF' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Mapping Tools</h3>
-                <p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.5 }}>Select a field or use the drawing tools to define new boundaries for satellite monitoring.</p>
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Parcel Information</h3>
+                <p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.5 }}>Select a field from the Field Directory bellow to see more information.</p>
               </div>
             )}
 
