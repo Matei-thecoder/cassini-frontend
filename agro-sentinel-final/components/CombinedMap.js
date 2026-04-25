@@ -267,7 +267,7 @@ export default function CombinedMap({ fields = [], onAreaDrawn, drawMode, setDra
       {/* SVG Layer (Same logic as before, now synced to Leaflet) */}
       <svg className="absolute inset-0 pointer-events-none w-full h-full z-10">
         {map && fields.map(field => {
-          const pathData = field.polygon.map((p, i) => {
+          const pathData = field.geometry.map((p, i) => {
             const { x, y } = project(p.lng, p.lat)
             return `${i === 0 ? 'M' : 'L'}${x},${y}`
           }).join(' ') + ' Z'
