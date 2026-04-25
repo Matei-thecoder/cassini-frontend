@@ -364,7 +364,12 @@ function MapScreen() {
       // Allow fallbacks in case new DB records lack statuses
       if ((f.status || 'healthy') === 'healthy') s.healthy++
       else s.alert++
-      s.area += parseFloat(f.area) || 0
+
+      if(f.area == undefined) {
+          f.area = computeArea(f.bounds) || 0; // Compute area if not provided, using bounds as a fallback
+      }
+
+      s.area += (parseFloat(f.area) || 0)
     })
     return s
   }, [fields])
@@ -466,7 +471,7 @@ function MapScreen() {
           <div>
             <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: '#FFF' }}>Parcels Map</h1>
             <p style={{ fontSize: 14, color: '#52B788', marginTop: 8 }}>
-              {stats.total} MONITORED • {stats.area.toFixed(1)} HA TOTAL AREA
+              {stats.total} MONITORED • {stats.area.toFixed(2)} HA TOTAL AREA
             </p>
           </div>
 
