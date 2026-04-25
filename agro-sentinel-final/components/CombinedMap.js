@@ -241,7 +241,14 @@ export default function CombinedMap({ fields = [], onAreaDrawn, drawMode, setDra
   return (
     <div className="relative w-full h-[600px] rounded-3xl overflow-hidden border border-[#52B788]/20 shadow-2xl bg-[#051009]">
       <MapContainer
-        center={[42.35816, -71.06776]}
+        center={[47.1622, 27.5886]}
+        // Oraș	Coordonate
+      // Bucharest	[44.4268, 26.1025]
+      // Iași	[47.1622, 27.5886]
+      // Cluj-Napoca	[46.7712, 23.5556]
+      // Timișoara	[45.7472, 21.1921]
+      // Constanța	[44.1598, 28.6518]
+
         zoom={13}
         ref={setMap}
         zoomControl={false}
