@@ -132,7 +132,16 @@ export default function CombinedMap({ fields = [], onAreaDrawn, drawMode, setDra
           />
         )}
       </svg>
-      
+
+      {/* Toolbar */}
+      <div className="absolute top-4 left-4 flex gap-2 bg-[#051009]/90 p-2 rounded-xl border border-[#52B788]/30 z-20">
+        <button onClick={() => setDrawMode('none')} className={`p-2 rounded ${drawMode === 'none' ? 'bg-[#16A34A]' : ''}`}>🖐</button>
+        <button onClick={() => setDrawMode('rect')} className={`p-2 rounded ${drawMode === 'rect' ? 'bg-[#16A34A]' : ''}`}>▭</button>
+        <button onClick={() => setDrawMode('polygon')} className={`p-2 rounded ${drawMode === 'polygon' ? 'bg-[#16A34A]' : ''}`}>⬡</button>
+        {polyPoints.length >= 3 && (
+          <button onClick={() => { onAreaDrawn(polyPoints); setPolyPoints([]); setDrawMode('none') }} className="bg-[#16A34A] px-2 rounded text-xs">Finish</button>
+        )}
+      </div>
     </div>
   )
 }
