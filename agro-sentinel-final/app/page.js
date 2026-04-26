@@ -132,7 +132,7 @@ export default function LandingPage() {
             maxWidth: 640,
             margin: '0 auto 40px',
           }}>
-            AgroSentinel fuses Sentinel-2 imagery, 847 ground sensors, and ML risk models
+            AgroSentinel fuses Sentinel-2 imagery, sensors and ML risk models
             into one clean dashboard — so floods, droughts, and yield drops never surprise you.
           </p>
 
@@ -161,40 +161,7 @@ export default function LandingPage() {
           </div>
 
           {/* Stats strip */}
-          <div style={{
-            marginTop: 72,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 1,
-            background: 'rgba(82,183,136,0.1)',
-            border: '1px solid rgba(82,183,136,0.1)',
-            borderRadius: 16,
-            overflow: 'hidden',
-          }}>
-            {STATS.map(s => (
-              <div key={s.label} style={{
-                padding: '24px 16px',
-                background: 'rgba(15,30,20,0.9)',
-              }}>
-                <div style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 36, fontWeight: 700,
-                  color: '#E8F5E9',
-                  lineHeight: 1,
-                  fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {s.number}<span style={{ fontSize: 18, color: 'rgba(82,183,136,0.7)', marginLeft: 2 }}>{s.unit}</span>
-                </div>
-                <div style={{
-                  marginTop: 6,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  color: 'rgba(232,245,233,0.45)',
-                  letterSpacing: '0.08em', textTransform: 'uppercase',
-                }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+          
         </div>
       </section>
 
